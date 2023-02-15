@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
+from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
 from app_utils.typing import UTCDatetime
@@ -13,6 +14,23 @@ class DiscountType(str, Enum):
 
     fix = "fix"
     percent = "percent"
+
+
+class CouponStatus(str, Enum):
+    """
+    Coupon status enum.
+    """
+
+    valid = "valid"
+    invalid = "invalid"
+
+
+class CouponStatusResponse(BaseModel):
+    """
+    Coupon status response model.
+    """
+
+    status: CouponStatus
 
 
 class BaseCoupon(SQLModel):

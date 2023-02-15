@@ -1,10 +1,12 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session
 
 from app_utils.service import CommitFailed, NotFound
 from app_utils.typing import SessionContextProvider
 
-from .model import Coupon, CouponCreate, CouponUpdate
+from .model import Coupon, CouponCreate, CouponStatus, CouponStatusResponse, CouponUpdate
 from .service import CouponService
 
 
@@ -16,6 +18,7 @@ def make_api(
     add_delete=True,
     add_get_all=True,
     add_get_by_id=True,
+    add_status=True,
     add_update=True,
 ) -> APIRouter:
     """
@@ -28,6 +31,7 @@ def make_api(
         add_delete: Whether to add the delete route.
         add_get_all: Whether to add the get all route.
         add_get_by_id: Whether to add the get by ID route.
+        add_status: Whether to add the `{id}/status` route.
         add_update: Whether to add the update route.
     """
 
@@ -89,5 +93,21 @@ def make_api(
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to delete coupon.")
 
             return Response(status_code=status.HTTP_200_OK)
+
+    if add_status:
+
+        @api.get("/{id}/status", response_model=CouponStatusResponse)
+        def coupon_status(id: int, service: CouponService = Depends(get_service)):
+            """
+            Returns the status of the coupon with the given ID at the time of the request.
+            """
+            coupon = service.get_by_id(id)
+            if coupon is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Coupon not found.")
+
+            now = datetime.utcnow()
+            return CouponStatusResponse(
+                status=CouponStatus.valid if coupon.valid_from <= now <= coupon.valid_until else CouponStatus.invalid
+            )
 
     return api
