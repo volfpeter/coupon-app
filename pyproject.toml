@@ -1,0 +1,9 @@
+[tool.black]
+line-length = 118
+
+[tool.mypy]
+check_untyped_defs = true
+show_error_codes = true
+
+[tool.ruff]
+line-length = 118
