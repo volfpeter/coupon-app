@@ -43,6 +43,14 @@ Coupon:
 
 Note: having `customer` in `Coupon` means a coupon can be used either by a single customer or by anyone. Supporting "group" coupon would require an additional link table (and the removal of the `customer` attribute).
 
+## CLI
+
+Built with `typer`.
+
+Execute with `python -m app_cli.main`.
+
+Run demo fixture: `python -m app_cli.main demo`.
+
 ## Testing
 
 TODO
