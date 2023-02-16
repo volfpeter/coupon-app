@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
+import random
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.app import get_database_engine
 from app_model import initialize_database
 from app_model.coupon.model import CouponTable, CouponCreate, DiscountType
 from app_model.customer.model import CustomerTable, CustomerCreate
+from app_model.customer_coupon.model import CustomerCouponTable
 
 
 def run_fixture():
@@ -26,7 +28,15 @@ def run_fixture():
         # -- Create customers.
 
         session.add_all(
-            [CustomerTable.from_orm(CustomerCreate(name=f"Customer {i}", username=f"customer{i}")) for i in range(10)]
+            [
+                CustomerTable.from_orm(
+                    CustomerCreate(
+                        name=f"Customer {i}",
+                        username=f"customer{i}",
+                    )
+                )
+                for i in range(10)
+            ]
         )
 
         session.commit()
@@ -38,7 +48,7 @@ def run_fixture():
                 CouponTable.from_orm(
                     CouponCreate(
                         code=f"ABCDEFG{i}",
-                        description="Fancy coupon {i}",
+                        description=f"Fancy coupon {i}",
                         discount=42,
                         discount_type=DiscountType.fix,
                         valid_from=now + timedelta(days=7 + 2 * i),
@@ -48,5 +58,25 @@ def run_fixture():
                 for i in range(20)
             ]
         )
+
+        session.commit()
+
+        # -- Customer coupons
+
+        all_coupons = session.exec(select(CouponTable)).all()
+
+        def get_random_coupons() -> list[CouponTable]:
+            return random.sample(all_coupons, 3)
+
+        for customer in session.exec(select(CustomerTable)).all():
+            session.add_all(
+                [
+                    CustomerCouponTable(
+                        customer_id=customer.id,
+                        coupon_id=coupon.id,
+                    )
+                    for coupon in get_random_coupons()
+                ]
+            )
 
         session.commit()
