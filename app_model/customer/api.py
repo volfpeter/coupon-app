@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session
 
+from app_model.coupon.model import Coupon
 from app_utils.service import CommitFailed, NotFound
 from app_utils.typing import SessionContextProvider
 
@@ -14,6 +15,7 @@ def make_api(
     prefix="/customer",
     add_create=True,
     add_delete=True,
+    add_get_coupons=True,
     add_get_all=True,
     add_get_by_id=True,
     add_update=True,
@@ -26,6 +28,7 @@ def make_api(
         prefix: The prefix for the created `APIRouter`.
         add_create: Whether to add the create route.
         add_delete: Whether to add the delete route.
+        add_get_coupons: Whether to add the `/{id}/coupons` GET route.
         add_get_all: Whether to add the get all route.
         add_get_by_id: Whether to add the get by ID route.
         add_update: Whether to add the update route.
@@ -61,7 +64,7 @@ def make_api(
 
         @api.get("/{id}", response_model=Customer)
         def get_by_id(id: int, service: CustomerService = Depends(get_service)):
-            customer = service.get_by_id(id)
+            customer = service.get_by_pk(id)
             if customer is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found.")
             return customer
@@ -82,12 +85,21 @@ def make_api(
         @api.delete("/{id}")
         def delete_by_id(id: int, service: CustomerService = Depends(get_service)):
             try:
-                service.delete_by_id(id)
+                service.delete_by_pk(id)
             except NotFound:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found.")
             except CommitFailed:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to delete customer.")
 
             return Response(status_code=status.HTTP_200_OK)
+
+    if add_get_coupons:
+
+        @api.get("/{id}/coupons", response_model=list[Coupon])
+        def get_customer_coupons(id: int, service: CustomerService = Depends(get_service)):
+            customer = service.get_by_pk(id)
+            if customer is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found.")
+            return customer.coupons
 
     return api

@@ -6,6 +6,8 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.future import Engine
 from sqlmodel import Session, create_engine
 
+from app_utils.typing import APIFactory
+
 
 @lru_cache(maxsize=1)
 def get_database_engine() -> "Engine":
@@ -37,9 +39,12 @@ def register_routes(app: FastAPI, *, api_prefix="/api/v1") -> None:
     """
     from app_model.coupon.api import make_api as make_coupon_api
     from app_model.customer.api import make_api as make_customer_api
+    from app_model.customer_coupon.api import make_api as make_customer_coupon_api
+
+    api_factories: tuple[APIFactory, ...] = (make_coupon_api, make_customer_api, make_customer_coupon_api)
 
     # Register all APIs with the same settings.
-    for make_api in (make_coupon_api, make_customer_api):
+    for make_api in api_factories:
         app.include_router(make_api(session_provider=get_session), prefix=api_prefix)
 
 

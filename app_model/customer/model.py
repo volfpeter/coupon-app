@@ -1,8 +1,15 @@
+from typing import TYPE_CHECKING
+
 from datetime import datetime
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
+from app_model.customer_coupon.model import CustomerCouponTable
 from app_utils.typing import UTCDatetime
+
+
+if TYPE_CHECKING:
+    from app_model.coupon.model import CouponTable
 
 
 class BaseCustomer(SQLModel):
@@ -21,10 +28,12 @@ class CustomerTable(BaseCustomer, table=True):
     Customer database model.
     """
 
-    __tablename__ = "customers"
+    __tablename__ = "customer"
 
     id: int | None = Field(default=None, primary_key=True)
     created_at: UTCDatetime | None = Field(default_factory=datetime.utcnow)
+
+    coupons: list["CouponTable"] = Relationship(back_populates="customers", link_model=CustomerCouponTable)
 
 
 class Customer(BaseCustomer):

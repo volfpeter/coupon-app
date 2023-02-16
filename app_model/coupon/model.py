@@ -1,10 +1,16 @@
+from typing import TYPE_CHECKING
+
 from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
+from app_model.customer_coupon.model import CustomerCouponTable
 from app_utils.typing import UTCDatetime
+
+if TYPE_CHECKING:
+    from app_model.customer.model import CustomerTable
 
 
 class DiscountType(str, Enum):
@@ -44,8 +50,8 @@ class BaseCoupon(SQLModel):
     description: str
     discount: float = Field(gt=0)
     discount_type: DiscountType
-    valid_from: UTCDatetime
-    valid_until: UTCDatetime
+    valid_from: UTCDatetime  # Inclusive
+    valid_until: UTCDatetime  # Exclusive
 
 
 class CouponTable(BaseCoupon, table=True):
@@ -53,10 +59,12 @@ class CouponTable(BaseCoupon, table=True):
     Coupon database model.
     """
 
-    __tablename__ = "coupons"
+    __tablename__ = "coupon"
 
     id: int | None = Field(default=None, primary_key=True)
     created_at: UTCDatetime | None = Field(default_factory=datetime.utcnow)
+
+    customers: list["CustomerTable"] = Relationship(back_populates="coupons", link_model=CustomerCouponTable)
 
 
 class Coupon(BaseCoupon):

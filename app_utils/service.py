@@ -1,12 +1,14 @@
-from typing import Generic, Type, TypeVar
+from typing import Generic, Mapping, Type, TypeVar
 
 from sqlmodel import SQLModel, Session, select
 
+AtomicPrimaryKey = int | str
+PrimaryKey = AtomicPrimaryKey | tuple[AtomicPrimaryKey, ...] | list[AtomicPrimaryKey] | Mapping[str, AtomicPrimaryKey]
 
-Self = TypeVar("Self", bound="Service")  # Python 3.10 support... Should upgrade.
 TModel = TypeVar("TModel", bound=SQLModel)
 TCreate = TypeVar("TCreate", bound=SQLModel)
 TUpdate = TypeVar("TUpdate", bound=SQLModel)
+TPK = TypeVar("TPK", bound=PrimaryKey)
 
 
 class ServiceException(Exception):
@@ -27,7 +29,7 @@ class NotFound(ServiceException):
     ...
 
 
-class Service(Generic[TModel, TCreate, TUpdate]):
+class Service(Generic[TModel, TCreate, TUpdate, TPK]):
     """
     Base service implementation.
 
@@ -72,28 +74,28 @@ class Service(Generic[TModel, TCreate, TUpdate]):
         session.refresh(db_item)
         return db_item
 
-    def delete_by_id(self, id: int) -> None:
+    def delete_by_pk(self, pk: TPK) -> None:
         """
-        Deletes the item with the given ID from the database.
+        Deletes the item with the given primary key from the database.
 
         Arguments:
-            id: Item database ID.
+            pk: The primary key.
 
         Raises:
             CommitFailed: If the service fails to commit the operation.
-            NotFound: If the document with the given ID does not exist.
+            NotFound: If the document with the given primary key does not exist.
         """
         session = self._session
 
-        item = self.get_by_id(id)
+        item = self.get_by_pk(pk)
         if item is None:
-            raise NotFound(str(id))
+            raise NotFound(self._format_primary_key(pk))
 
         session.delete(item)
         try:
             session.commit()
         except Exception:
-            raise CommitFailed(f"Failed to delete item {id}.")
+            raise CommitFailed("Failed to delete item.")
 
     def get_all(self) -> list[TModel]:
         """
@@ -101,32 +103,32 @@ class Service(Generic[TModel, TCreate, TUpdate]):
         """
         return self._session.exec(select(self._model)).all()
 
-    def get_by_id(self, id: int) -> TModel | None:
+    def get_by_pk(self, pk: PrimaryKey) -> TModel | None:
         """
-        Returns the item with the ID.
+        Returns the item with the given primary key if it exists.
 
         Arguments:
-            id: Item database ID.
+            pk: The primary key.
         """
-        return self._session.get(self._model, id)
+        return self._session.get(self._model, pk)
 
-    def update(self, id: int, data: TUpdate) -> TModel:
+    def update(self, pk: TPK, data: TUpdate) -> TModel:
         """
-        Updates the item with the given ID.
+        Updates the item with the given primary key.
 
         Arguments:
-            id: Item database ID.
+            pk: The primary key.
             data: Update data.
 
         Raises:
             CommitFailed: If the service fails to commit the operation.
-            NotFound: If the document with the given ID does not exist.
+            NotFound: If the document with the given primary key does not exist.
         """
         session = self._session
 
-        item = self.get_by_id(id)
+        item = self.get_by_pk(pk)
         if item is None:
-            raise NotFound(str(id))
+            raise NotFound(self._format_primary_key(pk))
 
         changes = self._prepare_for_update(data)
         for key, value in changes.items():
@@ -136,10 +138,29 @@ class Service(Generic[TModel, TCreate, TUpdate]):
         try:
             session.commit()
         except Exception:
-            raise CommitFailed(f"Failed to update {id}.")
+            raise CommitFailed(f"Failed to update {self._format_primary_key(pk)}.")
 
         session.refresh(item)
         return item
+
+    def _format_primary_key(self, pk: TPK) -> str:
+        """
+        Returns the string-formatted version of the primary key.
+
+        Arguments:
+            pk: The primary key to format.
+
+        Raises:
+            ValueError: If formatting fails.
+        """
+        if isinstance(pk, (str, int)):
+            return str(pk)
+        elif isinstance(pk, (tuple, list)):
+            return "|".join(pk)
+        elif isinstance(pk, dict):
+            return "|".join(f"{k}:{v}" for k, v in pk.items())
+
+        raise ValueError("Unrecognized primary key type.")
 
     def _prepare_for_update(self, data: TUpdate) -> dict:
         """

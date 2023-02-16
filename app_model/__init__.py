@@ -9,5 +9,6 @@ if TYPE_CHECKING:
 def initialize_database(engine: "Engine") -> None:
     from .coupon.model import CouponTable  # noqa
     from .customer.model import CustomerTable  # noqa
+    from .customer_coupon.model import CustomerCouponTable  # noqa
 
     SQLModel.metadata.create_all(engine)

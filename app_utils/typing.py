@@ -2,6 +2,7 @@ from typing import Generator, Protocol
 
 from datetime import datetime, timezone
 
+from fastapi import APIRouter
 from pydantic.datetime_parse import parse_datetime
 from sqlmodel import Session
 
@@ -12,6 +13,15 @@ class SessionContextProvider(Protocol):
     """
 
     def __call__(self) -> Generator[Session, None, None]:
+        ...
+
+
+class APIFactory(Protocol):
+    """
+    API factory protocol.
+    """
+
+    def __call__(self, *, session_provider: SessionContextProvider) -> APIRouter:
         ...
 
 
