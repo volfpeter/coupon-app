@@ -3,7 +3,7 @@ import random
 
 from sqlmodel import Session, select
 
-from app.app import get_database_engine
+from app.main import get_database_engine
 from app.settings import get_settings
 
 from app_model import initialize_database

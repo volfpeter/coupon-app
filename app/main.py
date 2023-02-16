@@ -54,6 +54,8 @@ def create_app() -> FastAPI:
     """
     # -- Application config
 
+    settings = get_settings()
+
     app = FastAPI()
 
     @app.on_event("startup")
@@ -65,6 +67,6 @@ def create_app() -> FastAPI:
 
     # -- Routing
 
-    register_routes(app)
+    register_routes(app, api_prefix=settings.api_prefix)
 
     return app

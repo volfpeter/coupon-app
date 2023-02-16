@@ -4,6 +4,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
+    api_prefix: str = "/api/v1"
     database_url: str = "sqlite///database.db"
     database_echo: bool = False
 

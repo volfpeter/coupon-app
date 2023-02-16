@@ -6,7 +6,7 @@ name = "pypi"
 [scripts]
 start="uvicorn app:create_app --reload --factory --ssl-certfile app-cert.pem --ssl-keyfile app-key.pem"
 start-http="uvicorn app.app:create_app --reload --factory"
-create-certificate = "openssl req -x509 -newkey rsa:4096 -nodes -out app-cert.pem -keyout app-key.pem -days 3650"
+create-certificate="openssl req -x509 -newkey rsa:4096 -nodes -out app-cert.pem -keyout app-key.pem -days 3650"
 make-random-key="openssl rand -hex 32"
 
 [packages]
@@ -19,8 +19,9 @@ psycopg2-binary = "*"
 [dev-packages]
 black = "*"
 mypy = "*"
-ruff = "*"
 pytest = "*"
+requests = "*"
+ruff = "*"
 
 [requires]
 python_version = "3.10"
