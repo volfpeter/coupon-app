@@ -4,6 +4,8 @@ import random
 from sqlmodel import Session, select
 
 from app.app import get_database_engine
+from app.settings import get_settings
+
 from app_model import initialize_database
 from app_model.coupon.model import CouponTable, CouponCreate, DiscountType
 from app_model.customer.model import CustomerTable, CustomerCreate
@@ -14,7 +16,7 @@ def run_fixture():
     """
     Executes the demo fixture.
     """
-    engine = get_database_engine()
+    engine = get_database_engine(get_settings())
     initialize_database(engine)
 
     now = datetime.utcnow()

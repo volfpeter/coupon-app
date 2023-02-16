@@ -13,6 +13,8 @@ make-random-key="openssl rand -hex 32"
 fastapi = {extras = ["all"], version = "*"}
 sqlmodel = "*"
 typer = {extras = ["all"], version = "*"}
+python-dotenv = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 black = "*"

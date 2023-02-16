@@ -43,6 +43,27 @@ Coupon:
 
 Note: having `customer` in `Coupon` means a coupon can be used either by a single customer or by anyone. Supporting "group" coupon would require an additional link table (and the removal of the `customer` attribute).
 
+## Configuration
+
+Configuration requires `python-dotenv` and is done with `pydantic.Settings`.
+
+## PostreSQL
+
+Database driver: `psycopg2-binary`
+
+After a local PostgreSQL install, you will need to create a database user or alter the default `postgres` user for example like this (from the `psql` console that can be started with `sudo -u postgres psql`):
+
+```SQL
+ALTER USER postgres PASSWORD '<your-password>';
+```
+
+You will also need to create a database, for example with this command:
+
+```SQL
+SELECT 'CREATE DATABASE <databasename>'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'databasename')\gexec
+```
+
 ## CLI
 
 Built with `typer`.
